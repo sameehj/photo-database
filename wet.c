@@ -7,13 +7,22 @@ int main(int arc, char **argv) {
 	sprintf(connect_param,
 			"host=csl2.cs.technion.ac.il dbname=%s user=%s password=%s",
 			USERNAME, USERNAME, PASSWORD);
-	PGconn *conn = PQconnectdb(connect_param);
+	conn = PQconnectdb(connect_param);
+	parseInput();
 	return 0;
 }
 
 void* addUser(const char* name) {
-
-}
+	
+	PGresult *res;
+	char cmd[200];
+	sprintf(cmd, "insert into users values ((select max(id)+1 from users),\'%s\')",name);
+	res = PQexec(conn,cmd);
+	if(!res || PQresultStatus(res) != PGRES_COMMAND_OK) {
+		fprintf(stderr, "Error executing query: %s\n",PQresultErrorMessage(res));
+		PQclear(res);
+		return;
+	}
 void* addUserMin(const char* name) {
 
 }
