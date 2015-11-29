@@ -13,7 +13,7 @@ int main(int arc, char **argv) {
 }
 
 void* addUser(const char* name) {
-	
+
 	PGresult *res;
 	char cmd[200];
 	sprintf(cmd, "insert into users values ((select max(id)+1 from users),\'%s\')",name);
@@ -23,6 +23,7 @@ void* addUser(const char* name) {
 		PQclear(res);
 		return;
 	}
+}
 void* addUserMin(const char* name) {
 
 }
