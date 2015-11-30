@@ -13,7 +13,6 @@ int main(int arc, char **argv) {
 }
 
 void* addUser(const char* name) {
-
 	PGresult *res;
 	char cmd[200];
 	sprintf(cmd, "insert into users values ((select max(id)+1 from users),\'%s\')",name);
@@ -22,13 +21,30 @@ void* addUser(const char* name) {
 		fprintf(stderr, "Error executing query: %s\n",PQresultErrorMessage(res));
 		PQclear(res);
 		return;
+	}else{
+		sprintf(cmd,"select id from users where id=(select max(id) from users)");
+		res = PQexec(conn,cmd);
+		if(!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
+			fprintf(stderr, "Error executing query: %s\n",PQresultErrorMessage(res));
+			PQclear(res);
+			return;
+		}
+		int id = atoi(PQgetvalue(res,0,0));
+		printf("%d\n",id);	
 	}
 }
 void* addUserMin(const char* name) {
-
 }
 void* removeUser(const char* id) {
-
+	PGresult *res;
+	char cmd[200];
+	sprintf(cmd, "delete from users where id=%d;",atoi(id));
+	res = PQexec(conn,cmd);
+	if(!res || PQresultStatus(res) != PGRES_COMMAND_OK) {
+		fprintf(stderr, "Error executing query: %s\n",PQresultErrorMessage(res));
+		PQclear(res);
+		return;
+	}
 }
 void* addPhoto(const char* user_id, const char* photo_id) {
 
