@@ -1,6 +1,7 @@
 #include "wet.h"
 #include <libpq-fe.h>
-
+#include <stdlib.h>
+void print_table(const char* header,const char* result_template,PGresult *res,int row,int col);
 PGconn *conn;
 int main(int arc, char **argv) {
 	char connect_param[200];
@@ -12,11 +13,13 @@ int main(int arc, char **argv) {
 	return 0;
 }
 
+//TODO : if there is an Error Executing the second command, should return the database into prior execution state - maybe we can assume it will work?
 void* addUser(const char* name) {
 	PGresult *res;
 	char cmd[200];
+	//TODO : fix the case where there is no users. what max(id) returns? - Done!
 	sprintf(cmd,
-			"insert into users values ((select max(id)+1 from users),\'%s\')",
+			"insert into users values (coalesce((select max(id)+1 from users),0),\'%s\')",
 			name);
 	res = PQexec(conn, cmd);
 	if (!res || PQresultStatus(res) != PGRES_COMMAND_OK) {
@@ -32,14 +35,39 @@ void* addUser(const char* name) {
 			fprintf(stderr, "Error executing query: %s\n",
 					PQresultErrorMessage(res));
 			PQclear(res);
+			
 			return;
 		}
-		int id = atoi(PQgetvalue(res, 0, 0));
-		printf("%d\n", id);
+		printf(ADD_USER, PQgetvalue(res, 0, 0));
 	}
 }
+//TODO : if there is an Error Executing the second command, should return the database into prior execution state
 void* addUserMin(const char* name) {
+	PGresult *res;
+	char cmd[200];
+	sprintf(cmd,
+			"insert into users values (coalesce((select min(id)+1 from users where users.id not in(select u1.id from users as u1,users as u2 where u1.id = u2.id - 1)),0),\'%s\')",
+			name);
+	res = PQexec(conn, cmd);
+	if (!res || PQresultStatus(res) != PGRES_COMMAND_OK) {
+		fprintf(stderr, "Error executing query: %s\n",
+				PQresultErrorMessage(res));
+		PQclear(res);
+		return;
+	} else {
+		sprintf(cmd,
+				"select * from users where name=\'%s\' order by id asc",name);
+		res = PQexec(conn, cmd);
+		if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
+			fprintf(stderr, "Error executing query: %s\n",
+					PQresultErrorMessage(res));
+			PQclear(res);
+			return;
+		}
+		print_table(USER_HEADER,USER_RESULT,res,PQntuples(res),PQnfields(res));
+	}
 }
+//TODO : if the user doesn't Exist ==> print ILL_PARAMS
 void* removeUser(const char* id) {
 	PGresult *res;
 	char cmd[200];
@@ -54,6 +82,7 @@ void* removeUser(const char* id) {
 		return;
 	}
 }
+//TODO : if there is an Error Executing the second command, should return the database into prior execution state
 void* addPhoto(const char* user_id, const char* photo_id) {
 	PGresult *res;
 	int userId = atoi(user_id);
@@ -121,4 +150,15 @@ void* autoPhotoOnTagOn() {
 }
 void* autoPhotoOnTagOFF() {
 
+}
+void print_table(const char* header,const char* result_template,PGresult *res,int row,int col){
+	printf(header);
+	int i=0;
+	for(i=0;i<row;i++){
+		if(col == 2)
+			printf(result_template,PQgetvalue(res, i, 0),PQgetvalue(res, i, 1));
+		else if(col == 1)
+			printf(result_template,PQgetvalue(res, i, 0),PQgetvalue(res, i, 1),PQgetvalue(res, i, 2));			
+		else exit(0);
+	}
 }
