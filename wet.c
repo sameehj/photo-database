@@ -60,7 +60,7 @@ void* addPhoto(const char* user_id, const char* photo_id) {
 	int photoId = atoi(photo_id);
 	char cmd[200];
 	//check if user exists
-	sprintf(cmd, "select id from users where id=%d");
+	sprintf(cmd, "select id from users where id=%d",userId);
 	res = PQexec(conn, cmd);
 	if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
 		fprintf(stderr, "Error executing query: %s\n",
@@ -82,6 +82,21 @@ void* addPhoto(const char* user_id, const char* photo_id) {
 		PQclear (res);
 		return;
 	}
+	if(PQntuples(res)!=0){
+		printf("%s",EXISTING_RECORD);
+		return;
+	}
+	// the user exists anf the phoyo doesn't exist - add it.
+	sprintf(cmd, "insert into photos (user_id,id) values (%d,%d)",
+			userId, photoId);
+	res = PQexec(conn, cmd);
+	if (!res || PQresultStatus(res) != PGRES_COMMAND_OK) {
+		fprintf(stderr, "Error executing query: %s\n",
+				PQresultErrorMessage(res));
+		PQclear (res);
+		return;
+	}
+							
 }
 void* tagPhoto(const char* user_id, const char* photo_id, const char* info) {
 
