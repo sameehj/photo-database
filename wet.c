@@ -35,7 +35,7 @@ void* addUser(const char* name) {
 			fprintf(stderr, "Error executing query: %s\n",
 					PQresultErrorMessage(res));
 			PQclear(res);
-			
+
 			return;
 		}
 		printf(ADD_USER, PQgetvalue(res, 0, 0));
@@ -170,7 +170,26 @@ void* tagPhoto(const char* user_id, const char* photo_id, const char* info) {
 	}
 }
 void* photosTags() {
-
+	PGresult *res;
+	char cmd[200];
+	sprintf(cmd,"SELECT photo_id,user_id, COUNT(photo_id) AS dupe_cnt FROM tags GROUP BY photo_id,user_id HAVING COUNT(photo_id) > 0 ORDER BY COUNT(photo_id) DESC, user_id ASC,photo_id ASC");
+	res = PQexec(conn, cmd);
+	if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
+		fprintf(stderr, "Error executing query: %s\n",
+				PQresultErrorMessage(res));
+		PQclear(res);
+		return;
+	}
+	int i,size=PQntuples(res);
+	if(size !=0){
+		for(i=0;i<size;i++){
+			printf(PHOTOS_HEADER);
+			printf(PHOTOS_RESULT,PQgetvalue(res, i, 0),PQgetvalue(res, i, 1),PQgetvalue(res, i, 2));	
+		}
+	}
+	else {
+		printf(EMPTY);
+	}
 }
 void* search(const char* word) {
 
