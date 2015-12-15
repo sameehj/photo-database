@@ -180,19 +180,30 @@ void* photosTags() {
 		PQclear(res);
 		return;
 	}
-	int i,size=PQntuples(res);
-	if(size !=0){
-		for(i=0;i<size;i++){
-			printf(PHOTOS_HEADER);
-			printf(PHOTOS_RESULT,PQgetvalue(res, i, 0),PQgetvalue(res, i, 1),PQgetvalue(res, i, 2));	
-		}
+	if(PQntuples(res) !=0){
+		print_table(PHOTOS_HEADER,PHOTOS_RESULT,res,PQntuples(res),PQnfields(res));
 	}
 	else {
 		printf(EMPTY);
 	}
 }
 void* search(const char* word) {
-
+	PGresult *res;
+	char cmd[200];
+	sprintf(cmd,"SELECT photo_id,user_id, COUNT(photo_id) AS dupe_cnt FROM tags WHERE info LIKE '%%%s%%' GROUP BY photo_id,user_id HAVING COUNT(photo_id) > 0 ORDER BY COUNT(photo_id) DESC, user_id ASC,photo_id DESC",word);
+	res = PQexec(conn, cmd);
+	if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
+		fprintf(stderr, "Error executing query: %s\n",
+				PQresultErrorMessage(res));
+		PQclear(res);
+		return;
+	}
+	if(PQntuples(res) != 0){
+		print_table(PHOTOS_HEADER,PHOTOS_RESULT,res,PQntuples(res),PQnfields(res));
+	}
+	else {
+		printf(EMPTY);
+	}
 }
 void* commonTags(const char* k) {
 
@@ -215,7 +226,7 @@ void print_table(const char* header,const char* result_template,PGresult *res,in
 	for(i=0;i<row;i++){
 		if(col == 2)
 			printf(result_template,PQgetvalue(res, i, 0),PQgetvalue(res, i, 1));
-		else if(col == 1)
+		else if(col == 3)
 			printf(result_template,PQgetvalue(res, i, 0),PQgetvalue(res, i, 1),PQgetvalue(res, i, 2));			
 		else exit(0);
 	}

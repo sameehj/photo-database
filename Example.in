@@ -1,0 +1,30 @@
+delete from users *
+delete from photos *
+delete from tags *
+addUser Wasim
+removeUser 2
+addUserMin Sameh
+addUserMin Wasim1
+addUser Wasim2
+addUserMin Wasim3
+addUserMin Sameh1
+addUser Sameh2
+addUserMin Sameh3
+addPhoto 2 100
+addPhoto 2 101
+addPhoto 2 102
+addPhoto 3 100
+addPhoto 3 101
+addPhoto 3 102
+tagPhoto 2 100 Fun
+tagPhoto 2 100 Fun1
+tagPhoto 2 100 Car1
+tagPhoto 2 100 Fun3
+tagPhoto 2 102 Fun4
+tagPhoto 2 102 Car
+tagPhoto 2 102 Car1
+tagPhoto 2 101 Car2
+tagPhoto 2 101 Car3
+tagPhoto 2 101 Car4
+tagPhoto 2 102 Car5
+search Car
