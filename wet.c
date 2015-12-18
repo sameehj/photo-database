@@ -257,7 +257,16 @@ void* autoPhotoOnTagOn() {
 	}
 }
 void* autoPhotoOnTagOFF() {
-
+	PGresult *res;
+	char cmd[200];
+	sprintf(cmd,"DROP TRIGGER auto_photo on tags; DROP FUNCTION insert_missing_photo();");
+	res = PQexec(conn, cmd);
+	if (!res || PQresultStatus(res) != PGRES_COMMAND_OK) {
+		fprintf(stderr, "Error executing query: %s\n",
+				PQresultErrorMessage(res));
+		PQclear(res);
+		return;
+	}
 }
 void print_table(const char* header,const char* result_template,PGresult *res,int row,int col){
 	printf(header);
