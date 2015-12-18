@@ -184,7 +184,7 @@ void* tagPhoto(const char* user_id, const char* photo_id, const char* info) {
 void* photosTags() {
 	PGresult *res;
 	char cmd[800];
-	sprintf(cmd,"SELECT photo_id,user_id, COUNT(photo_id) AS dupe_cnt FROM tags GROUP BY photo_id,user_id HAVING COUNT(photo_id) > 0 ORDER BY COUNT(photo_id) DESC, user_id ASC,photo_id ASC");
+	sprintf(cmd,"SELECT user_id,id, COUNT(info) AS dupe_cnt FROM (SELECT photos.user_id,photos.id,tags.info FROM tags RIGHT JOIN photos ON tags.photo_id=photos.id and tags.user_id=photos.user_id) AS shwmakan GROUP BY id,user_id HAVING COUNT(info) >= 0 ORDER BY COUNT(info) DESC, user_id ASC,id ASC");
 	res = PQexec(conn, cmd);
 	if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
 		fprintf(stderr, "Error executing query: %s\n",
@@ -202,7 +202,7 @@ void* photosTags() {
 void* search(const char* word) {
 	PGresult *res;
 	char cmd[800];
-	sprintf(cmd,"SELECT photo_id,user_id, COUNT(photo_id) AS dupe_cnt FROM tags WHERE info LIKE '%%%s%%' GROUP BY photo_id,user_id HAVING COUNT(photo_id) > 0 ORDER BY COUNT(photo_id) DESC, user_id ASC,photo_id DESC",word);
+	sprintf(cmd,"SELECT user_id,photo_id, COUNT(photo_id) AS dupe_cnt FROM tags WHERE info LIKE '%%%s%%' GROUP BY photo_id,user_id HAVING COUNT(photo_id) > 0 ORDER BY COUNT(photo_id) DESC, user_id ASC,photo_id DESC",word);
 	res = PQexec(conn, cmd);
 	if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
 		fprintf(stderr, "Error executing query: %s\n",
@@ -220,7 +220,7 @@ void* search(const char* word) {
 void* commonTags(const char* k) {
 	PGresult *res;
 	char cmd[800];
-	sprintf(cmd,"SELECT temp.info,temp.count from(SELECT info ,(COUNT(info)) FROM tags GROUP BY info) temp where count > %d ORDER BY temp.count DESC , temp.info ASC",atoi(k));
+	sprintf(cmd,"SELECT temp.info,temp.count from(SELECT info ,(COUNT(info)) FROM tags GROUP BY info) temp where count >= %d ORDER BY temp.count DESC , temp.info ASC",atoi(k));
 	res = PQexec(conn, cmd);
 	if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
 		fprintf(stderr, "Error executing query: %s\n",
