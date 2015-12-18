@@ -256,7 +256,7 @@ void* mostCommonTags(const char* k) {
 void* similarPhotos(const char* k, const char* j) {
 	PGresult *res;
 	char cmd[800];
-	sprintf(cmd,"select user_id,n1.name,photo_id from (select user_id,photo_id,count(user_id) from (select t1.user_id,t1.photo_id,count(t1.user_id) from tags as t1,tags as t2 where t1.info = t2.info and not(t1.user_id = t2.user_id and t1.photo_id = t2.photo_id) group by t1.user_id,t2.user_id,t1.photo_id,t2.photo_id) as tagtag where tagtag.count > %s group by user_id,photo_id having count(user_id)>0) as res,users as n1 where n1.id = res.user_id and count > %s order by user_id asc,photo_id desc",j,k);
+	sprintf(cmd,"select user_id,n1.name,photo_id from (select user_id,photo_id,count(user_id) from (select t1.user_id,t1.photo_id,count(t1.user_id) from tags as t1,tags as t2 where t1.info = t2.info and not(t1.user_id = t2.user_id and t1.photo_id = t2.photo_id) group by t1.user_id,t2.user_id,t1.photo_id,t2.photo_id) as tagtag where tagtag.count >= %s group by user_id,photo_id having count(user_id)>0) as res,users as n1 where n1.id = res.user_id and count >= %s order by user_id asc,photo_id desc",j,k);
 	res = PQexec(conn, cmd);
 	if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
 		fprintf(stderr, "Error executing query: %s\n",
