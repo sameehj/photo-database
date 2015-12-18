@@ -206,7 +206,22 @@ void* search(const char* word) {
 	}
 }
 void* commonTags(const char* k) {
-
+	PGresult *res;
+	char cmd[200];
+	sprintf(cmd,"SELECT temp.info,temp.count from(SELECT info ,(COUNT(info)) FROM tags GROUP BY info) temp where count > %d ORDER BY temp.count DESC , temp.info ASC",atoi(k));
+	res = PQexec(conn, cmd);
+	if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
+		fprintf(stderr, "Error executing query: %s\n",
+				PQresultErrorMessage(res));
+		PQclear(res);
+		return;
+	}
+	if(PQntuples(res) !=0){
+		print_table(COMMON_HEADER,COMMON_LINE,res,PQntuples(res),PQnfields(res));
+	}
+	else {
+		printf(EMPTY);
+	}
 }
 void* mostCommonTags(const char* k) {
 
