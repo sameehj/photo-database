@@ -245,7 +245,16 @@ void* similarPhotos(const char* k, const char* j) {
 	}
 }
 void* autoPhotoOnTagOn() {
-
+	PGresult *res;
+	char cmd[400];
+	sprintf(cmd,"CREATE OR REPLACE FUNCTION insert_missing_photo() RETURNS TRIGGER AS $$ BEGIN IF(NEW.photo_id NOT IN (SELECT photo_id FROM Tags)) THEN INSERT INTO photos VALUES(NEW.photo_id,NEW.user_id); END IF; RETURN NEW; END; $$ LANGUAGE plpgsql; CREATE TRIGGER auto_photo BEFORE INSERT ON tags FOR EACH ROW EXECUTE PROCEDURE insert_missing_photo();");
+	res = PQexec(conn, cmd);
+	if (!res || PQresultStatus(res) != PGRES_COMMAND_OK) {
+		fprintf(stderr, "Error executing query: %s\n",
+				PQresultErrorMessage(res));
+		PQclear(res);
+		return;
+	}
 }
 void* autoPhotoOnTagOFF() {
 
