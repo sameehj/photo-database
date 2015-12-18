@@ -224,7 +224,22 @@ void* commonTags(const char* k) {
 	}
 }
 void* mostCommonTags(const char* k) {
-
+	PGresult *res;
+	char cmd[200];
+	sprintf(cmd,"select info,count from (select *, (select count(*) from (select * from (select info,count(info) from tags group by info) as tt order by count desc, info asc) as  p2 where p1.count < p2.count or (p1.count = p2.count and p1.info > p2.info)) as cnt from (select * from (select info,count(info) from tags group by info) as tt1 order by count desc, info asc) as p1) as pp where pp.cnt < %s",k);
+	res = PQexec(conn, cmd);
+	if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
+		fprintf(stderr, "Error executing query: %s\n",
+				PQresultErrorMessage(res));
+		PQclear(res);
+		return;
+	}
+	if(PQntuples(res) !=0){
+		print_table(COMMON_HEADER,COMMON_LINE,res,PQntuples(res),PQnfields(res));
+	}
+	else {
+		printf(EMPTY);
+	}
 }
 void* similarPhotos(const char* k, const char* j) {
 	PGresult *res;
